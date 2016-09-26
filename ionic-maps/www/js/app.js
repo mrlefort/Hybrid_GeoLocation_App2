@@ -38,12 +38,14 @@ angular.module('starter', ['ionic', 'ngCordova'])
  
 })
 
-.controller('MapCtrl', function($scope, $state, $cordovaGeolocation) {
+.controller('MapCtrl', function($scope, $state, $cordovaGeolocation, $ionicModal, $http) {
+
   var options = {timeout: 10000, enableHighAccuracy: true};
  
   $cordovaGeolocation.getCurrentPosition(options).then(function(position){
  
     var latLng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+    var lyngbyStation = new google.maps.LatLng(55.76838988, 12.50313878);
  
     var mapOptions = {
       center: latLng,
@@ -70,11 +72,75 @@ google.maps.event.addListenerOnce($scope.map, 'idle', function(){
   google.maps.event.addListener(marker, 'click', function () {
       infoWindow.open($scope.map, marker);
   });
+
+
+  var marker2 = new google.maps.Marker({
+    map: $scope.map,
+    animation: google.maps.Animation.DROP,
+    position: lyngbyStation
+  });
+
+  var infoWindow2 = new google.maps.InfoWindow({
+    content: "Lyngby St."
+  });
+
+  google.maps.event.addListener(marker2, 'click', function () {
+    infoWindow2.open($scope.map, marker2);
+  });
  
 });
  
   }, function(error){
     console.log("Could not get location");
   });
-  
+
+  $ionicModal.fromTemplateUrl('my-modal.html', {
+    scope: $scope,
+    animation: 'slide-in-up'
+  }).then(function(modal) {
+    $scope.modal = modal;
+  });
+  $scope.openModal = function() {
+    $scope.modal.show();
+  };
+  $scope.closeModal = function() {
+    $scope.modal.hide();
+  };
+  // Cleanup the modal when we're done with it!
+  $scope.$on('$destroy', function() {
+    $scope.modal.remove();
+  });
+  // Execute action on hide modal
+  $scope.$on('modal.hidden', function() {
+    // Execute action
+  });
+  // Execute action on remove modal
+  $scope.$on('modal.removed', function() {
+    // Execute action
+  });
+
+
+  $scope.user = {};
+  $scope.registerUser = function (user) {
+    $scope.modal.hide();
+    console.log("1: " + user.userName);
+    console.log("2: " + user.distance);
+    user.loc = {type: "Point", coordinates: []}; //GeoJSON point
+    user.loc.coordinates.push(55.7716773); //Observe that longitude comes first
+    user.loc.coordinates.push(12.5067384); //in GEoJSON
+    console.log(JSON.stringify(user));
+    $http({
+      method: "POST",
+      url: " http://ionicboth-plaul.rhcloud.com/api/friends/register/"+user.distance,
+      data: user
+    }).then(console.log("Hej")) //Your task is to handle the response
+
+
+  }
+
+
+
 });
+
+
+
